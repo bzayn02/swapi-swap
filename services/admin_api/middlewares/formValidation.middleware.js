@@ -1,14 +1,13 @@
 import Joi from 'joi';
-import joi from 'joi';
 
+const shortStr = Joi.string().max(20).required().alphanum();
+const email = Joi.string().max(25).email({ minDomainSegments: 2 }).required();
 export const createAdminValidation = (req, res, next) => {
-    console.log(req.body);
-
     //server side validation
     const schema = Joi.object({
-        fname: Joi.string().max(20).required().alphanum(),
-        lname: Joi.string().max(20).required().alphanum(),
-        email: Joi.string().max(25).email({ minDomainSegments: 2 }).required(),
+        fname: shortStr,
+        lname: shortStr,
+        email: email,
         password: Joi.string().min(8).required(),
         dob: Joi.date(),
         phone: Joi.string().max(15),
@@ -27,12 +26,20 @@ export const createAdminValidation = (req, res, next) => {
     next();
 };
 
-// {
-//     fname: 'Bijay',
-//     lname: 'Nagarkoti',
-//     email: 'a@gmail.com',
-//     password: 'ASDFJKL',
-//     phone: '838383838',
-//     address: 'Sydney',
-//     gender: 'male'
-//   }
+export const adminEmailVerificationValidation = async (req, res, next) => {
+    const schema = Joi.object({
+        email: email,
+
+        pin: Joi.string().min(6).required(),
+    });
+
+    const value = schema.validate(req.body);
+
+    if (value.error) {
+        return res.json({
+            status: 'error',
+            message: value.error.message,
+        });
+    }
+    next();
+};

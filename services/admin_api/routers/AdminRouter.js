@@ -1,9 +1,22 @@
 import express from 'express';
-import { createAdmin } from '../database/admin-model/Admin.model.js';
-import { createAdminValidation } from '../middlewares/formValidation.middleware.js';
+import {
+    createAdmin,
+    verifyEmail,
+} from '../database/admin-model/Admin.model.js';
+import {
+    adminEmailVerificationValidation,
+    createAdminValidation,
+} from '../middlewares/formValidation.middleware.js';
 import { hashPassword } from '../helpers/bcrypt.helper.js';
-import { createUniqueEmailConfirmation } from '../database/session/Session.model.js';
-import { emailProcessor } from '../helpers/email.helper.js';
+import {
+    createUniqueEmailConfirmation,
+    deleteInfo,
+    findAdminEmailVerification,
+} from '../database/session/Session.model.js';
+import {
+    sendEmailVerificationLink,
+    sendEmailVerificationConfirmation,
+} from '../helpers/email.helper.js';
 
 const Router = express.Router();
 
@@ -26,7 +39,7 @@ Router.post('/', createAdminValidation, async (req, res) => {
                         email,
                         pin,
                     };
-                    emailProcessor(forSendingEmail);
+                    sendEmailVerificationLink(forSendingEmail);
                 }
                 return res.json({
                     status: 'success',
@@ -52,5 +65,43 @@ Router.post('/', createAdminValidation, async (req, res) => {
         });
     }
 });
+
+// Email verification
+Router.patch(
+    '/email-verification',
+    adminEmailVerificationValidation,
+    async (req, res) => {
+        try {
+            const result = await findAdminEmailVerification(req.body);
+            if (result?._id) {
+                const data = await verifyEmail(result?.email);
+                if (data?._id) {
+                    // delete the session info
+                    deleteInfo(req.body);
+                    sendEmailVerificationConfirmation({
+                        fname: data.fname,
+                        email: data.email,
+                    });
+                    return res.json({
+                        status: 'success',
+                        message:
+                            'Success! Your email has now been verified. You may login now.',
+                    });
+                }
+            }
+            res.json({
+                status: 'error',
+                message:
+                    'Error, Unable to verify the email, either the link is invalid or expired.',
+            });
+        } catch (error) {
+            res.json({
+                status: 'error',
+                message:
+                    'Error, Unable to verify the email, please try again later.',
+            });
+        }
+    }
+);
 
 export default Router;
