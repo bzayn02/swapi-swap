@@ -44,7 +44,7 @@ export const sendEmailVerificationLink = (emailObj) => {
         html: `Hi ${fname}.
         <br/><br/>
         Please follow the link below to confirm your email.<br/><br/>
-        ${link}
+        <a href="${link}">${link}</a>
         Thank you.<br/><br/>
         Kind regards.
         --SWAPI SWAP--`,
