@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Alert, Form, InputGroup } from 'react-bootstrap';
+import { Alert, Form, InputGroup, Spinner } from 'react-bootstrap';
+import { useDispatch, useSelector } from 'react-redux';
+import { userRegister } from './userAction';
 
 const Register = () => {
+    const dispatch = useDispatch();
     const initialState = {
         fname: '',
         lname: '',
@@ -17,14 +20,22 @@ const Register = () => {
     const [user, setUser] = useState(initialState);
     const [passwordError, setPasswordError] = useState('');
 
+    const { isPending, userRegistrationResponse } = useSelector(
+        (state) => state.user
+    );
+
     const handleOnSubmit = (e) => {
         e.preventDefault();
 
         // Check for the password confirmation
-        const { password, confirmPassword } = user;
-        password !== confirmPassword &&
+        const { confirmPassword, ...newUser } = user;
+        const { password } = user;
+        if (password !== confirmPassword) {
             setPasswordError('Password does not match!');
-        console.log(user);
+            return;
+        }
+
+        dispatch(userRegister(newUser));
     };
 
     const handleOnChange = (e) => {
@@ -37,13 +48,29 @@ const Register = () => {
     };
 
     return (
-        <div className="mt-5 md:m-24 lg:m-50">
-            <div className="text-center text-3xl text-purple-600 font-semibold drop-shadow-lg indent-1">
+        <div className="mt-5 md:m-24">
+            <div className="p-2 text-center text-3xl text-purple-600 font-semibold drop-shadow-lg">
                 Swapi-Swap Admin Registration
+                <hr />
             </div>
+            <div className="max-w-md mx-auto">
+                {isPending && <Spinner variant="primary" animation="border" />}
+                {userRegistrationResponse?.message && (
+                    <Alert
+                        variant={
+                            userRegistrationResponse?.status === 'success'
+                                ? 'success'
+                                : 'danger'
+                        }
+                    >
+                        {userRegistrationResponse?.message}
+                    </Alert>
+                )}
+            </div>
+
             <Form
                 onSubmit={handleOnSubmit}
-                className="m-5 border-4 border-purple-800 rounded-lg p-4 drop-shadow-lg"
+                className="m-3 border-4 border-purple-800 rounded-lg p-4 drop-shadow-lg max-w-lg min-w-fit mx-auto"
             >
                 <Form.Group className="mb-3">
                     <Form.Label>First Name *</Form.Label>
@@ -116,6 +143,7 @@ const Register = () => {
                         onChange={handleOnChange}
                         type="password"
                         name="password"
+                        minLength="8"
                         placeholder="Password"
                         required
                     />
@@ -126,6 +154,7 @@ const Register = () => {
                         onChange={handleOnChange}
                         type="password"
                         name="confirmPassword"
+                        minLength="8"
                         placeholder="Password"
                         required
                     />
