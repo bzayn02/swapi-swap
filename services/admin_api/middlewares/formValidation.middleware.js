@@ -1,3 +1,4 @@
+import e from 'express';
 import Joi from 'joi';
 
 const shortStr = Joi.string().max(20).required().alphanum();
@@ -9,10 +10,10 @@ export const createAdminValidation = (req, res, next) => {
         lname: shortStr,
         email: email,
         password: Joi.string().min(8).required(),
-        dob: Joi.date(),
-        phone: Joi.string().max(15),
+        dob: Joi.date().allow(null).allow(''),
+        phone: Joi.string().max(15).allow(''),
         address: Joi.string().max(100),
-        gender: Joi.string().max(6),
+        gender: Joi.string().max(6).allow(''),
     });
 
     const value = schema.validate(req.body);
